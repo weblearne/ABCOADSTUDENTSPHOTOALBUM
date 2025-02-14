@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --primary-color: #27ae60;
+            --primary-dark: #219a52;
+            --primary-light: #2ecc71;
+            --white: #ffffff;
+            --light-green: #ebf7f0;
+        }
+
+        .transaction-container {
+            padding: 20px;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-filter-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 35px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+        }
+
+        .filter-dropdown {
+            padding: 10px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 5px;
+            background: var(--white);
+            color: var(--primary-dark);
+            cursor: pointer;
+        }
+
+        .transaction-table-container {
+            overflow-x: auto;
+        }
+
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .transaction-table th {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .transaction-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .transaction-table tr:hover {
+            background: var(--light-green);
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-view {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-view:hover {
+            background: var(--primary-dark);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--primary-color);
+            background: var(--white);
+            color: var(--primary-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .page-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* Transaction Details Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--white);
+            width: 90%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .transaction-details {
+            margin-top: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .transaction-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-filter-container {
+                flex-direction: column;
+            }
+
+            .transaction-table th:nth-child(3),
+            .transaction-table td:nth-child(3) {
+                display: none;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .pagination {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .transaction-table th:nth-child(4),
+            .transaction-table td:nth-child(4) {
+                display: none;
+            }
+
+            .page-btn {
+                padding: 6px 10px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Add this to your sidebar nav-menu -->
+    <div class="nav-item" onclick="showSection('transactions')">
+        <i class="fas fa-exchange-alt"></i> Transactions
+    </div>
+
+    <!-- Add this new section to your main-content area -->
+    <div id="transactions" class="section">
+        <div class="transaction-container">
+            <div class="transaction-header">
+                <h2>Transaction History</h2>
+                <div class="search-filter-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search transactions..." onkeyup="searchTransactions()">
+                    </div>
+                    <select class="filter-dropdown" onchange="filterTransactions()">
+                        <option value="all">All Status</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="transaction-table-container">
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#TRX001</td>
+                            <td>Saifullahi Khamis</td>
+                            <td>&#8358;500</td>
+                            <td>2024-02-14</td>
+                            <td><span class="status-badge status-completed">Completed</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-view" onclick="viewTransaction('TRX001')">View Details</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#TRX002</td>
+                            <td>Musa Muhammad Ahmad</td>
+                            <td>&#8358;500</td>
+                            <td>2024-02-14</td>
+                            <td><span class="status-badge status-pending">Pending</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-view" onclick="viewTransaction('TRX002')">View Details</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#TRX003</td>
+                            <td>Web Learner</td>
+                            <td>&#8358;500</td>
+                            <td>2024-02-13</td>
+                            <td><span class="status-badge status-failed">Failed</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-view" onclick="viewTransaction('TRX003')">View Details</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Details Modal -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Transaction Details</h2>
+            <div class="transaction-details">
+                <div class="detail-row">
+                    <span class="detail-label">Transaction ID:</span>
+                    <span id="modal-transaction-id"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">User:</span>
+                    <span id="modal-user"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount:</span>
+                    <span id="modal-amount"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Date:</span>
+                    <span id="modal-date"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span id="modal-status"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Method:</span>
+                    <span id="modal-payment-method"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchTransactions() {
+            const input = document.querySelector('.search-box input');
+            const filter = input.value.toUpperCase();
+            const table = document.querySelector('.transaction-table');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let txtValue = '';
+                for (let j = 0; j < td.length; j++) {
+                    txtValue += td[j].textContent || td[j].innerText;
+                }
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = '';
+                } else {
+                    tr[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterTransactions() {
+            const select = document.querySelector('.filter-dropdown');
+            const filter = select.value;
+            const table = document.querySelector('.transaction-table');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const statusCell = tr[i].getElementsByTagName('td')[4];
+                const status = statusCell.textContent || statusCell.innerText;
+                if (filter === 'all' || status.toLowerCase().includes(filter.toLowerCase())) {
+                    tr[i].style.display = '';
+                } else {
+                    tr[i].style.display = 'none';
+                }
+            }
+        }
+
+        function viewTransaction(transactionId) {
+            const modal = document.getElementById('transactionModal');
+            
+            // Sample data - In real application, this would come from your backend
+            const transactionData = {
+                'TRX001': {
+                    id: '#TRX001',
+                    user: 'John Doe',
+                    amount: '$99.99',
+                    date: '2024-02-14',
+                    status: 'Completed',
+                    paymentMethod: 'Credit Card'
+                },
+                'TRX002': {
+                    id: '#TRX002',
+                    user: 'Jane Smith',
+                    amount: '500',
+                    date: '2024-02-14',
+                    status: 'Pending',
+                    paymentMethod: 'PayPal'
+                },
+                'TRX003': {
+                    id: '#TRX003',
+                    user: 'Mike Johnson',
+                    amount: '&#8358;500',
+                    date: '2024-02-13',
+                    status: 'Failed',
+                    paymentMethod: 'Debit Card'
+                }
+            };
+
+            const transaction = transactionData[transactionId];
+            
+            document.getElementById('modal-transaction-id').textContent = transaction.id;
+            document.getElementById('modal-user').textContent = transaction.user;
+            document.getElementById('modal-amount').textContent = transaction.amount;
+            document.getElementById('modal-date').textContent = transaction.date;
+            document.getElementById('modal-status').textContent = transaction.status;
+            document.getElementById('modal-payment-method').textContent = transaction.paymentMethod;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('transactionModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside

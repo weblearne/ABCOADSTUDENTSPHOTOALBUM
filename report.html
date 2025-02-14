@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Keeping your original CSS variables and reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --primary-color: #27ae60;
+            --primary-dark: #219a52;
+            --primary-light: #2ecc71;
+            --white: #ffffff;
+            --light-green: #ebf7f0;
+        }
+
+        /* Reports Section Specific Styles */
+        .reports-container {
+            padding: 20px;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .reports-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 15px;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            background: var(--white);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .reports-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .report-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            overflow: hidden;
+        }
+
+        .user-details h3 {
+            font-size: 1.1em;
+            margin-bottom: 3px;
+            color: var(--primary-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timestamp {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-resolved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .report-content {
+            margin-bottom: 15px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .reply-section {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .reply-section.active {
+            display: block;
+        }
+
+        .reply-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            resize: vertical;
+            min-height: 80px;
+            font-size: 0.9em;
+        }
+
+        .reply-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .reports-container {
+                padding: 15px;
+            }
+
+            .reports-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .reports-filters {
+                justify-content: space-between;
+            }
+
+            .filter-btn {
+                flex: 1;
+                text-align: center;
+                padding: 8px 10px;
+                font-size: 0.85em;
+            }
+
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-card {
+                padding: 15px;
+            }
+
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+            }
+
+            .report-actions {
+                flex-direction: column;
+            }
+
+            .report-actions .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .status-badge {
+                font-size: 0.75em;
+                padding: 4px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .reports-filters {
+                flex-direction: column;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
+
+            .user-details h3 {
+                font-size: 1em;
+            }
+
+            .timestamp {
+                font-size: 0.8em;
+            }
+
+            .report-content {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Add this to your sidebar nav-menu -->
+    <div class="nav-item" onclick="showSection('reports')">
+        <i class="fas fa-flag"></i> Reports
+    </div>
+
+    <!-- Add this new section to your main-content area -->
+    <div id="reports" class="section">
+        <div class="reports-container">
+            <div class="reports-header">
+                <h2>User Reports</h2>
+                <div class="reports-filters">
+                    <button class="filter-btn active" onclick="filterReports('all')">All Reports</button>
+                    <button class="filter-btn" onclick="filterReports('pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterReports('resolved')">Resolved</button>
+                </div>
+            </div>
+
+            <div class="reports-grid">
+                <!-- Sample Report Card 1 -->
+                <div class="report-card" data-status="pending">
+                    <div class="report-header">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-details">
+                                <h3>Saifullahi Khamis</h3>
+                                <span class="timestamp">2 hours ago</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="report-content">
+                        <p>I'm experiencing issues with the chart generation feature. The data isn't displaying correctly.</p>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-primary" onclick="toggleReply(this)">Reply</button>
+                        <button class="btn btn-primary" onclick="markResolved(this)">Mark as Resolved</button>
+                    </div>
+                    <div class="reply-section">
+                        <textarea class="reply-input" placeholder="Type your reply here..."></textarea>
+                        <button class="btn btn-primary" onclick="sendReply(this)">Send Reply</button>
+                    </div>
+                </div>
+
+                <!-- Sample Report Card 2 -->
+                <div class="report-card" data-status="resolved">
+                    <div class="report-header">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-details">
+                                <h3>Web Learner</h3>
+                                <span class="timestamp">1 day ago</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-resolved">Resolved</span>
+                    </div>
+                    <div class="report-content">
+                        <p>Unable to access premium features after upgrade. Please check my account status.</p>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-primary" onclick="toggleReply(this)">Reply</button>
+                    </div>
+                    <div class="reply-section">
+                        <textarea class="reply-input" placeholder="Type your reply here..."></textarea>
+                        <button class="btn btn-primary" onclick="sendReply(this)">Send Reply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleReply(button) {
+            const replySection = button.closest('.report-card').querySelector('.reply-section');
+            replySection.classList.toggle('active');
+        }
+
+        function sendReply(button) {
+            const replySection = button.closest('.reply-section');
+            const replyInput = replySection.querySelector('.reply-input');
+            const replyText = replyInput.value;
+            
+            if (replyText.trim() === '') {
+                alert('Please enter a reply message');
+                return;
+            }
+
+            // Here you would typically send the reply to your backend
+            alert('Reply sent successfully!');
+            
+            replyInput.value = '';
+            replySection.classList.remove('active');
+        }
+
+        function markResolved(button) {
+            const reportCard = button.closest('.report-card');
+            const statusBadge = reportCard.querySelector('.status-badge');
+            
+            reportCard.setAttribute('data-status', 'resolved');
+            statusBadge.className = 'status-badge status-resolved';
+            statusBadge.textContent = 'Resolved';
+            
+            button.style.display = 'none';
+        }
+
+        function filterReports(status) {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const reportCards = document.querySelectorAll('.report-card');
+
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            reportCards.forEach(card => {
+                if (status === 'all' || card.getAttribute('data-status') === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

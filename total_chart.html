@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Monitoring Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --primary-color: #27ae60;
+            --primary-dark: #219a52;
+            --primary-light: #2ecc71;
+            --white: #ffffff;
+            --light-green: #ebf7f0;
+            --gray: #666;
+        }
+
+        .chat-container {
+            padding: 20px;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 35px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+        }
+
+        .chat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .chat-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .chat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .chat-users {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+
+        .chat-preview {
+            color: var(--gray);
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8em;
+            color: var(--gray);
+        }
+
+        /* Chat Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--white);
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .close-btn {
+            cursor: pointer;
+            font-size: 1.5em;
+            color: var(--gray);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 10px;
+            background: var(--light-green);
+            display: inline-block;
+        }
+
+        .message.sent .message-content {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .message-time {
+            font-size: 0.8em;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .modal-actions {
+            padding-top: 15px;
+            border-top: 1px solid rgba(39, 174, 96, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 15px;
+            }
+
+            .search-filter-container {
+                flex-direction: column;
+            }
+
+            .chat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                height: 90vh;
+                margin: 25px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Add this to your sidebar nav-menu -->
+    <div class="nav-item" onclick="showSection('chats')">
+        <i class="fas fa-comments"></i> View Chats
+    </div>
+
+    <!-- Add this new section to your main-content area -->
+    <div id="chats" class="section">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Chat Monitoring</h2>
+            </div>
+
+            <div class="search-filter-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search chats..." onkeyup="searchChats()">
+                </div>
+            </div>
+
+            <div class="chat-grid">
+                <!-- Sample Chat Cards -->
+                <div class="chat-card" onclick="viewChat('chat1')">
+                    <div class="chat-users">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <h3>Saifullahi Khamis</h3>
+                                <span>Student</span>
+                            </div>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+                    <div class="chat-preview">
+                        Latest message: I need help with the premium features...
+                    </div>
+                    <div class="chat-meta">
+                        <span>2 hours ago</span>
+                        <span>15 messages</span>
+                    </div>
+                </div>
+
+                <div class="chat-card" onclick="viewChat('chat2')">
+                    <div class="chat-users">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <h3>Web Learner</h3>
+                                <span>Premium User</span>
+                            </div>
+                        </div>
+                        <span class="status-badge">Inactive</span>
+                    </div>
+                    <div class="chat-preview">
+                        Latest message: Thank you for your help with...
+                    </div>
+                    <div class="chat-meta">
+                        <span>1 day ago</span>
+                        <span>8 messages</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Detail Modal -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="user-info">
+                    <h3 id="modal-user-name">User Name</h3>
+                    <span id="modal-user-type">User Type</span>
+                </div>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+
+            <div class="chat-messages" id="modalMessages">
+                <!-- Messages will be populated dynamically -->
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="downloadChat()">Download Chat History</button>
+                <button class="btn btn-danger" onclick="deleteChat()">Delete Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchChats() {
+            const input = document.querySelector('.search-box input');
+            const filter = input.value.toUpperCase();
+            const cards = document.querySelectorAll('.chat-card');
+
+            cards.forEach(card => {
+                const text = card.textContent || card.innerText;
+                if (text.toUpperCase().indexOf(filter) > -1) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function viewChat(chatId) {
+            const modal = document.getElementById('chatModal');
+            const messagesContainer = document.getElementById('modalMessages');
+            
+            // Sample chat data - In real application, this would come from your backend
+            const chatData = {
+                'chat1': {
+                    userName: 'John Doe',
+                    userType: 'Student',
+                    messages: [
+                        { content: 'Hello, I need help with the premium features', time: '2:30 PM', sent: false },
+                        { content: 'Of course! What specific feature are you having trouble with?', time: '2:31 PM', sent: true },
+                        { content: 'I cant access the advanced analytics', time: '2:32 PM', sent: false }
+                    ]
+                },
+                'chat2': {
+                    userName: 'Jane Smith',
+                    userType: 'Premium User',
+                    messages: [
+                        { content: 'Thank you for your help with the upgrade', time: '1:15 PM', sent: false },
+                        { content: 'You're welcome! Let me know if you need anything else', time: '1:16 PM', sent: true }
+                        ]
+                }
+            };
+
+            const chat = chatData[chatId];
+            
+            // Update modal header
+            document.getElementById('modal-user-name').textContent = chat.userName;
+            document.getElementById('modal-user-type').textContent = chat.userType;
+
+            // Clear previous messages
+            messagesContainer.innerHTML = '';
+
+            // Add messages
+            chat.messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.sent ? 'sent' : ''}`;
+                messageDiv.innerHTML = `
+                    <div class="message-content">${msg.content}</div>
+                    <div class="message-time">${msg.time}</div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('chatModal').style.display = 'none';
+        }
+
+        function downloadChat() {
+            // Implementation for downloading chat history
+            alert('Chat history download started...');
+        }
+
+        function deleteChat() {
+            if (confirm('Are you sure you want to delete this chat history?')) {
+                // Implementation for deleting chat
+                alert('Chat deleted successfully');
+                closeModal();
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('chatModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
