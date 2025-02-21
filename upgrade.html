@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Upgrade System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      body {
+            font-family: sans-serif;
+            background-color: #e8f5e9; /* Light green background */
+            color: #212121; /* Dark gray text for better contrast on light green */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .upgrade-section {
+            background: #fff; /* White background for the section */
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            max-width: 800px;
+            width: 90%; /* Responsive width */
+        }
+        h2, h3 {
+            color: #388e3c; /* Darker green for headings */
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #c8e6c9; /* Lighter green border */
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .search-form input:focus {
+            outline: none;
+            border-color: #4caf50; /* Green focus border */
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1); /* Green focus shadow */
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #4caf50; /* Green button */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #43a047; /* Darker green on hover */
+            transform: translateY(-2px);
+        }
+        /* Swift Alert Styles */
+        .swift-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .swift-alert.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .swift-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .swift-alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .alert-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .alert-message {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .alert-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .alert-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .alert-buttons .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        .alert-buttons .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .upgrade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .upgrade-table th {
+            background: #4caf50; /* Green table header */
+            color: #fff;
+            padding: 12px;
+            text-align: left;
+        }
+        .upgrade-table td {
+            padding: 12px;
+            border-bottom: 1px solid #c8e6c9; /* Lighter green table border */
+        }
+        .upgrade-table tr:hover {
+            background: #e8f5e9; /* Light green table hover */
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #4caf50; /* Green status badge */
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="upgrade-section">
+        <h2>Upgrade User Account</h2>
+        
+        <form id="upgradeForm" class="search-form">
+            <input type="text" id="searchInput" placeholder="Enter user's email, full name, or phone number" required>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-arrow-up"></i> Upgrade Account
+            </button>
+        </form>
+        <div class="upgrade-history">
+            <h3>Recently Upgraded Accounts</h3>
+            <table class="upgrade-table">
+                <thead>
+                    <tr>
+                        <th>User Identifier</th>
+                        <th>Upgrade Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="upgradeHistory">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Swift Alert -->
+    <div class="swift-alert-overlay" id="alertOverlay"></div>
+    <div class="swift-alert" id="swiftAlert">
+        <div class="alert-title" id="alertTitle"></div>
+        <div class="alert-message" id="alertMessage"></div>
+        <div class="alert-buttons">
+            <button class="btn-success" id="confirmBtn">OK</button>
+            <button class="btn-danger" id="cancelBtn">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize upgrade history from localStorage
+        let upgradeHistory = JSON.parse(localStorage.getItem('upgradeHistory')) || [];
+        let upgradedCount = parseInt(localStorage.getItem('upgradedCount')) || 0;
+
+        // Show Swift Alert function
+        function showSwiftAlert(title, message, callback) {
+            const overlay = document.getElementById('alertOverlay');
+            const alert = document.getElementById('swiftAlert');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+
+            confirmBtn.style.display = callback ? 'inline-block' : 'none';
+            cancelBtn.style.display = callback ? 'inline-block' : 'none';
+
+            confirmBtn.onclick = () => {
+                hideSwiftAlert();
+                if (callback) callback();
+            };
+
+            cancelBtn.onclick = hideSwiftAlert;
+
+            overlay.classList.add('show');
+            alert.classList.add('show');
+        }
+
+        function hideSwiftAlert() {
+            const overlay = document.getElementById('alertOverlay');
+            const alert = document.getElementById('swiftAlert');
+            overlay.classList.remove('show');
+            alert.classList.remove('show');
+        }
+
+        // Render upgrade history
+        function renderHistory() {
+            const historyTable = document.getElementById('upgradeHistory');
+            historyTable.innerHTML = upgradeHistory.map(upgrade => `
+                <tr>
+                    <td>${upgrade.identifier}</td>
+                    <td>${upgrade.date}</td>
+                    <td><span class="status-badge">Upgraded</span></td>
+                </tr>
+            `).join('');
+            // Save the upgrade history back to localStorage
+            localStorage.setItem('upgradeHistory', JSON.stringify(upgradeHistory));
+            localStorage.setItem('upgradedCount', upgradeHistory.length);
+        }
+
+        // Handle form submission
+        document.getElementById('upgradeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('searchInput').value.trim();
+
+            if (!identifier) {
+                showSwiftAlert('Error', 'Please enter user information.');
+                return;
+            }
+
+            if (upgradeHistory.some(u => u.identifier.toLowerCase() === identifier.toLowerCase())) {
+                showSwiftAlert('Error', 'This user is already upgraded!');
+                return;
+            }
+
+            showSwiftAlert(
+                'Confirmation',
+                `Are you sure you want to upgrade the account for "${identifier}"?`,
+                () => {
+                    const upgrade = {
+                        identifier,
+                        date: new Date().toLocaleDateString(),
+                        status: 'upgraded'
+                    };
+                    upgradeHistory.unshift(upgrade); // Add the new upgrade to the beginning of the array
+                    renderHistory(); // Update the table and save to localStorage
+                    showSwiftAlert('Success', 'Account successfully upgraded to Premium!');
+                    e.target.reset(); // Clear the form input
+                }
+            );
+        });
+
+        // Initial render of upgrade history from localStorage
+        renderHistory();
+    </script>
+</body>
+</html>
